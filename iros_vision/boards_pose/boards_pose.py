@@ -5,14 +5,14 @@ import rospy
 from .sweep import sweep
 from .sweep_reconstruction import reconstruct_points
 from .pose_from_points import get_poses
-from ..utils import load_cam_intrinsics
+from ..utils import load_cam_intrinsics, load_tcp_t_cam
 
 
 def capture_images_and_find_boards(r: Robot):
     images, base_t_tcps = sweep(r, 40)
     pts_base = reconstruct_points(
         images=images, base_t_tcps=base_t_tcps,
-        K=load_cam_intrinsics('A')[0], tcp_t_cam=Transform.load('tcp_t_cam')
+        K=load_cam_intrinsics('A')[0], tcp_t_cam=load_tcp_t_cam('A')
     )
     base_t_taskboard, base_t_kitlayout = get_poses(pts_base)
     return base_t_taskboard, base_t_kitlayout

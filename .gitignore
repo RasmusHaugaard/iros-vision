@@ -1,3 +1,5 @@
 .idea
 **/__pycache__
 iros_vision.egg-info
+scripts/base_t_taskboard
+scripts/base_t_kitlayout
