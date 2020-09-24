@@ -1,23 +1,26 @@
 import numpy as np
-
+import rospy
 from ur_control import Robot
 from transform3d import Transform
-import rospy
-from cam import get_img
+
+from .cam import get_img
 
 x0, x1 = -0.4, -0.8
 y0, y1 = -0.4, 0.7
 z = 0.5
+look_angle = np.deg2rad(15)
 
 
 def sweep(r: Robot, n: int):
+    """Moves robot A in a U-shape over the workspace collecting n images"""
     s = np.linspace(0, 1, n)
     s0, s1 = s[::2], s[1::2]
 
     images, base_t_tcps = [], []
 
-    for start, end, ss, d in ((x0, y0), (x0, y1), s0, 1), ((x1, y1), (x1, y0), s1, -1):
-        angle_axis = 0, -np.pi + d * np.deg2rad(15), 0
+    for start, end, ss, d in [((x0, y0), (x0, y1), s0, 1),
+                              ((x1, y1), (x1, y0), s1, -1)]:
+        angle_axis = 0, -np.pi + d * look_angle, 0
         start = Transform.from_xyz_rotvec([*start, z, *angle_axis])
         end = Transform.from_xyz_rotvec([*end, z, *angle_axis])
 

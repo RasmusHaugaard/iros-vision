@@ -1,18 +1,18 @@
 from typing import List
-import numpy as np
 
-from transform3d import Transform
+import numpy as np
 import torch
 import cv2
-from tqdm import tqdm
-
-from detect_boards import detect_corners, draw_corners
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from transform3d import Transform
+
+from .detect_markers import detect_inner_corners, draw_corners
 
 
 def reconstruct_points(images: List[np.ndarray], base_t_tcps: List[Transform],
                        tcp_t_cam: Transform, K: np.ndarray, debug=False):
-    detections = [detect_corners(img) for img in tqdm(images)]
+    detections = [detect_inner_corners(img) for img in tqdm(images)]
 
     n_times_detected = np.zeros(8)
     for _, ids in detections:
@@ -46,6 +46,7 @@ def reconstruct_points(images: List[np.ndarray], base_t_tcps: List[Transform],
                     corner = torch.tensor(corner)
                     dist = torch.norm(points_img[img_i, :, marker_i] - corner)
                     dists.append(dist.item())
+                    # TODO: square dist
                     losses.append(dist / n_times_detected[marker_i])
 
             loss = torch.sum(torch.stack(losses))
@@ -75,12 +76,13 @@ def reconstruct_points(images: List[np.ndarray], base_t_tcps: List[Transform],
 
 def main():
     import time
-    from detect_boards import K
+    from ..utils import load_tcp_t_cam, load_cam_intrinsics
 
     n = 40
     images = [cv2.imread(f'sweep/{i}.png') for i in tqdm(range(n))]
     base_t_tcps = [Transform.load(f'sweep/base_t_tcp_{i}') for i in tqdm(range(n))]
-    tcp_t_cam = Transform.load('tcp_t_cam')
+    tcp_t_cam = load_tcp_t_cam('A')
+    K, _ = load_cam_intrinsics('A')
 
     start = time.time()
     points_base = reconstruct_points(images=images, base_t_tcps=base_t_tcps,
