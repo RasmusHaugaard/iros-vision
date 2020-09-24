@@ -31,9 +31,9 @@ def reconstruct_points(images: List[np.ndarray], base_t_tcps: List[Transform],
 
     points_base = torch.zeros((3, 8), dtype=torch.double, requires_grad=True)
 
-    for lr in 1e-2, 1e-3:
+    for lr, epochs in (1e-1, 200), (1e-2, 200), (1e-3, 200):
         opt = torch.optim.Adam([points_base], lr=lr)
-        pbar = tqdm(range(300))
+        pbar = tqdm(range(epochs))
         for _ in pbar:
             points_cam = cam_R_bases @ points_base + cam_p_bases  # (n, 3, 8)
             points_img = K @ points_cam
@@ -43,18 +43,19 @@ def reconstruct_points(images: List[np.ndarray], base_t_tcps: List[Transform],
             dists = []
             for img_i, (corners, ids) in zip(range(len(images)), detections):
                 for corner, marker_i in zip(corners, ids):
-                    corner = torch.tensor(corner)
-                    dist = torch.norm(points_img[img_i, :, marker_i] - corner)
-                    dists.append(dist.item())
-                    # TODO: square dist
-                    losses.append(dist / n_times_detected[marker_i])
-
+                    corner = torch.tensor(corner, dtype=torch.double)
+                    corner_est = points_img[img_i, :, marker_i]
+                    err = corner_est - corner
+                    dists.append(torch.norm(err).item())
+                    loss_ = torch.nn.functional.smooth_l1_loss(corner_est, corner)
+                    losses.append(loss_ / n_times_detected[marker_i])
             loss = torch.sum(torch.stack(losses))
 
             opt.zero_grad()
             loss.backward()
             opt.step()
-            pbar.set_description(f'{np.mean(dists):.2f}')
+
+            pbar.set_description(f'mean reprojection error norm: {np.mean(dists):.2f} px')
 
     points_base = points_base.detach().numpy().T
 
@@ -82,7 +83,7 @@ def main():
     images = [cv2.imread(f'sweep/{i}.png') for i in tqdm(range(n))]
     base_t_tcps = [Transform.load(f'sweep/base_t_tcp_{i}') for i in tqdm(range(n))]
     tcp_t_cam = load_tcp_t_cam('A')
-    K, _ = load_cam_intrinsics('A')
+    K = load_cam_intrinsics('A')[0]
 
     start = time.time()
     points_base = reconstruct_points(images=images, base_t_tcps=base_t_tcps,

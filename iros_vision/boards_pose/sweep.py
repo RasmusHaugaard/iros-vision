@@ -11,7 +11,7 @@ z = 0.5
 look_angle = np.deg2rad(15)
 
 
-def sweep(r: Robot, n: int):
+def sweep(r: Robot, n: int, speed=1., acc=1.):
     """Moves robot A in a U-shape over the workspace collecting n images"""
     s = np.linspace(0, 1, n)
     s0, s1 = s[::2], s[1::2]
@@ -26,7 +26,7 @@ def sweep(r: Robot, n: int):
 
         for s in ss:
             base_t_tcp = start.lerp(end, s)
-            r.ctrl.moveL(base_t_tcp)
+            r.ctrl.moveL(base_t_tcp, speed, acc)
             img = get_img()
 
             images.append(img)

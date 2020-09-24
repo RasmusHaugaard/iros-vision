@@ -11,7 +11,8 @@ def load_cam_intrinsics(name):
     calib = json.load((calib_folder / name / 'camera_intrinsics.json').open())
     K = np.array(calib['camera_matrix'])
     dist_coeffs = np.array(calib['dist_coeffs'])
-    return K, dist_coeffs
+    h, w = calib['h'], calib['w']
+    return K, dist_coeffs, h, w
 
 
 def load_tcp_t_cam(name):

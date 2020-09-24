@@ -3,7 +3,7 @@ from cv2 import aruco
 
 from ..utils import load_cam_intrinsics
 
-K, dist_coeffs = load_cam_intrinsics('A')
+K, dist_coeffs = load_cam_intrinsics('A')[:2]
 
 params = aruco.DetectorParameters_create()
 aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_50)

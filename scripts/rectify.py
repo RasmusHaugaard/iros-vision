@@ -1,19 +1,15 @@
-import json
-
 import numpy as np
 import cv2
 import rospy
 from sensor_msgs.msg import Image as ImageMsg
 from ros_numpy.image import image_to_numpy, numpy_to_image
 
+from iros_vision import load_cam_intrinsics
+
 rospy.init_node('rectifier_node')
-pub_image_rect = rospy.Publisher('/pylon_camera_node/image_rect', ImageMsg, queue_size=1)
+pub_image_rect = rospy.Publisher('/camera_A/image_rect', ImageMsg, queue_size=1)
 
-calib = json.load(open('camera_intrinsics.json'))
-K = np.array(calib['camera_matrix'])
-dist_coeffs = np.array(calib['dist_coeffs'])
-h, w = calib['h'], calib['w']
-
+K, dist_coeffs, h, w = load_cam_intrinsics('A')
 undistort_maps = cv2.initUndistortRectifyMap(K, dist_coeffs, np.eye(3), K, (w, h), cv2.CV_32FC1)
 
 
@@ -26,6 +22,6 @@ def cb(in_msg: ImageMsg):
     pub_image_rect.publish(out_msg)
 
 
-sub = rospy.Subscriber("/pylon_camera_node/image_raw", ImageMsg, cb, queue_size=1)
+sub = rospy.Subscriber("/camera_A/image_raw", ImageMsg, cb, queue_size=1)
 
 rospy.spin()

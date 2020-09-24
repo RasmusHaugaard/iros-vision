@@ -1,0 +1,7 @@
+camera_frame: camera_A
+device_user_id: 23442229
+camera_info_url: ""
+image_encoding: "bayer_bggr8"
+frame_rate: 10.0
+exposure: 10000.0
+balance_ratio: 1.0
